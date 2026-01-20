@@ -106,17 +106,6 @@ Data Memory[0] = 6 (expected: 6)
 *** TEST PASSED ***
 ```
 
-## Syllabus Coverage
-
-| Topic | Module |
-|-------|--------|
-| Binary Adders (Unit II) | ALU |
-| Flip-Flops (Unit II) | Register File |
-| Counters (Unit III) | Program Counter |
-| ISA (Unit IV) | Instruction Set |
-| Memory (Unit V) | Data Memory |
-| Control Unit (Unit V) | Control Unit |
-
 ## Author
 
 ADLD & CO (CS-244AI) Project - 2026
