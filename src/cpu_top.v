@@ -1,80 +1,80 @@
 /*
  * CPU Top Module
- * Integrates all components into a complete 8-bit RISC CPU
+ * Integrates all components into a complete 16-bit RISC CPU
  * 
- * ADLD & CO Project - 8-bit RISC CPU
+ * ADLD & CO Project - 16-bit RISC CPU
+ * 
+ * 16-bit Instruction Format:
+ * [15:12] - Opcode (4 bits)
+ * [11:10] - Rd (destination register, 2 bits)
+ * [9:8]   - Rs (source register, 2 bits)
+ * [7:0]   - Immediate value (8 bits)
  */
 
 module cpu_top (
-    input  wire        clk,          // Clock signal
-    input  wire        reset,        // Reset signal
-    output wire        halt,         // CPU halted indicator
-    output wire [7:0]  pc_out,       // Program counter (for debug)
-    output wire [7:0]  alu_result    // ALU result (for debug)
+    input  wire         clk,          // Clock signal
+    input  wire         reset,        // Reset signal
+    output wire         halt,         // CPU halted indicator
+    output wire [15:0]  pc_out,       // Program counter (for debug)
+    output wire [15:0]  alu_result    // ALU result (for debug)
 );
 
-    // Internal wires
-    wire [7:0] instruction_from_mem;
-    wire [7:0] reg_data1, reg_data2;
-    wire [7:0] alu_out;
-    wire [7:0] mem_read_data;
-    reg  [7:0] write_back_data;
-    wire       zero_flag;
+    // Internal wires - all 16-bit data paths
+    wire [15:0] instruction_from_mem;
+    wire [15:0] reg_data1, reg_data2;
+    wire [15:0] alu_out;
+    wire [15:0] mem_read_data;
+    reg  [15:0] write_back_data;
+    wire        zero_flag;
     
     // Control signals
     wire       pc_enable, pc_load;
     wire       reg_write;
     wire       mem_write;
     wire       mem_to_reg;
-    wire       imm_load;
     wire       ir_load;
-    wire       alu_latch;      // Latch ALU result
+    wire       alu_latch;
     wire [3:0] alu_op;
     wire       use_imm;
     
     // Instruction Register - latches instruction during FETCH
-    reg [7:0] instruction_reg;
-    wire [7:0] instruction = instruction_reg;
+    reg [15:0] instruction_reg;
+    wire [15:0] instruction = instruction_reg;
     
     always @(posedge clk or posedge reset) begin
         if (reset)
-            instruction_reg <= 8'b0;
+            instruction_reg <= 16'b0;
         else if (ir_load)
             instruction_reg <= instruction_from_mem;
     end
     
-    // Instruction decode from latched instruction
-    wire [3:0] opcode = instruction[7:4];
-    wire [1:0] rd     = instruction[3:2];
-    wire [1:0] rs     = instruction[1:0];
+    // Instruction decode from latched instruction (16-bit format)
+    wire [3:0] opcode = instruction[15:12];
+    wire [1:0] rd     = instruction[11:10];
+    wire [1:0] rs     = instruction[9:8];
+    wire [7:0] imm    = instruction[7:0];
     
-    // Immediate value register - latches during FETCH_IMM
-    reg [7:0] imm_reg;
-    always @(posedge clk or posedge reset) begin
-        if (reset)
-            imm_reg <= 8'b0;
-        else if (imm_load)
-            imm_reg <= instruction_from_mem;
-    end
+    // Immediate value extended to 16-bit
+    wire [15:0] imm_extended = {8'b0, imm};
     
     // ALU result register - latches during EXECUTE
-    reg [7:0] alu_result_reg;
+    reg [15:0] alu_result_reg;
     always @(posedge clk or posedge reset) begin
         if (reset)
-            alu_result_reg <= 8'b0;
+            alu_result_reg <= 16'b0;
         else if (alu_latch)
             alu_result_reg <= alu_out;
     end
     
     // ALU operand B selection
-    wire [7:0] alu_operand_b = reg_data2;
+    wire [15:0] alu_operand_b = reg_data2;
     
     // Write-back data selection - controlled by control unit signals
     always @(*) begin
         if (mem_to_reg)
             write_back_data = mem_read_data;
         else if (use_imm)
-            write_back_data = imm_reg;
+            write_back_data = imm_extended;
         else
             write_back_data = alu_result_reg;  // Use latched result
     end
@@ -92,7 +92,7 @@ module cpu_top (
         .reset      (reset),
         .pc_enable  (pc_enable),
         .pc_load    (pc_load),
-        .pc_in      (imm_reg),
+        .pc_in      (imm_extended),
         .pc_out     (pc_out)
     );
     
@@ -146,7 +146,6 @@ module cpu_top (
         .mem_to_reg (mem_to_reg),
         .use_imm    (use_imm),
         .ir_load    (ir_load),
-        .imm_load   (imm_load),
         .alu_latch  (alu_latch),
         .alu_op     (alu_op),
         .halt       (halt)

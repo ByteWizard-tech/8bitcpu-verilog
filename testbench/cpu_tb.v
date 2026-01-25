@@ -1,8 +1,8 @@
 /*
  * CPU Testbench
- * Simulates the 8-bit RISC CPU and displays execution trace
+ * Simulates the 16-bit RISC CPU and displays execution trace
  * 
- * ADLD & CO Project - 8-bit RISC CPU
+ * ADLD & CO Project - 16-bit RISC CPU
  */
 
 `timescale 1ns/1ps
@@ -10,11 +10,11 @@
 module cpu_tb;
 
     // Testbench signals
-    reg        clk;
-    reg        reset;
-    wire       halt;
-    wire [7:0] pc_out;
-    wire [7:0] alu_result;
+    reg         clk;
+    reg         reset;
+    wire        halt;
+    wire [15:0] pc_out;
+    wire [15:0] alu_result;
     
     // Instantiate CPU
     cpu_top cpu (
@@ -40,7 +40,7 @@ module cpu_tb;
     // Test sequence
     initial begin
         $display("========================================");
-        $display("  8-bit RISC CPU Simulation");
+        $display("  16-bit RISC CPU Simulation");
         $display("  ADLD & CO Project");
         $display("========================================");
         $display("");
@@ -50,8 +50,8 @@ module cpu_tb;
         #20;
         reset = 0;
         
-        $display("Time\tPC\tInstruction\tR0\tR1\tR2\tR3\tALU Out\tState");
-        $display("----\t--\t-----------\t--\t--\t--\t--\t-------\t-----");
+        $display("Time\tPC\tInstruction\t\tR0\tR1\tR2\tR3\tALU Out\tState");
+        $display("----\t--\t-----------\t\t--\t--\t--\t--\t-------\t-----");
         
         // Run simulation for enough cycles
         repeat (100) begin
@@ -61,7 +61,7 @@ module cpu_tb;
             $display("%0t\t%d\t%b\t%d\t%d\t%d\t%d\t%d\t%d",
                 $time,
                 pc_out,
-                cpu.imem_inst.memory[pc_out],
+                cpu.imem_inst.memory[pc_out[7:0]],
                 cpu.regfile_inst.registers[0],
                 cpu.regfile_inst.registers[1],
                 cpu.regfile_inst.registers[2],

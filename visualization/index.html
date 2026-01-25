@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>16-bit RISC CPU Visualizer</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>16-bit RISC CPU</h1>
+            <p class="subtitle">Data Flow Visualizer • ADLD & CO Project</p>
+        </header>
+
+        <main class="cpu-layout">
+            <!-- CPU Block Diagram -->
+            <div class="cpu-diagram">
+                <!-- Program Counter -->
+                <div class="component pc" id="pc">
+                    <div class="component-header">Program Counter</div>
+                    <div class="component-value" id="pc-value">0x0000</div>
+                </div>
+
+                <!-- Instruction Memory -->
+                <div class="component imem" id="imem">
+                    <div class="component-header">Instruction Memory</div>
+                    <div class="component-value" id="imem-value">0x0000</div>
+                    <div class="component-decode" id="instruction-decode"></div>
+                </div>
+
+                <!-- Register File -->
+                <div class="component regfile" id="regfile">
+                    <div class="component-header">Register File</div>
+                    <div class="registers">
+                        <div class="register"><span class="reg-name">R0</span><span class="reg-value" id="r0">0</span></div>
+                        <div class="register"><span class="reg-name">R1</span><span class="reg-value" id="r1">0</span></div>
+                        <div class="register"><span class="reg-name">R2</span><span class="reg-value" id="r2">0</span></div>
+                        <div class="register"><span class="reg-name">R3</span><span class="reg-value" id="r3">0</span></div>
+                    </div>
+                </div>
+
+                <!-- ALU -->
+                <div class="component alu" id="alu">
+                    <div class="component-header">ALU</div>
+                    <div class="alu-op" id="alu-op">NOP</div>
+                    <div class="component-value" id="alu-result">0</div>
+                </div>
+
+                <!-- Data Memory -->
+                <div class="component dmem" id="dmem">
+                    <div class="component-header">Data Memory</div>
+                    <div class="component-value" id="dmem-value">---</div>
+                </div>
+
+                <!-- Control Unit -->
+                <div class="component control" id="control">
+                    <div class="component-header">Control Unit</div>
+                    <div class="state-display" id="state">FETCH</div>
+                </div>
+
+                <!-- Data Buses (SVG) -->
+                <svg class="data-buses" id="buses">
+                    <!-- PC to IMEM -->
+                    <path id="bus-pc-imem" class="bus" d="M 160 80 L 160 130"/>
+                    <!-- IMEM to Control -->
+                    <path id="bus-imem-ctrl" class="bus" d="M 200 180 L 350 180 L 350 80"/>
+                    <!-- Control to all -->
+                    <path id="bus-ctrl-all" class="bus" d="M 400 100 L 450 100"/>
+                    <!-- RegFile to ALU -->
+                    <path id="bus-reg-alu" class="bus" d="M 160 400 L 160 450"/>
+                    <!-- ALU to RegFile (writeback) -->
+                    <path id="bus-alu-reg" class="bus" d="M 100 500 L 100 350"/>
+                    <!-- RegFile to DMEM -->
+                    <path id="bus-reg-dmem" class="bus" d="M 250 350 L 350 350"/>
+                    <!-- DMEM to RegFile -->
+                    <path id="bus-dmem-reg" class="bus" d="M 350 400 L 250 400"/>
+                </svg>
+            </div>
+
+            <!-- Controls and Info Panel -->
+            <aside class="info-panel">
+                <div class="control-buttons">
+                    <button id="btn-reset" class="btn btn-reset">
+                        <span class="icon">↺</span> Reset
+                    </button>
+                    <button id="btn-step" class="btn btn-step">
+                        <span class="icon">▸</span> Step
+                    </button>
+                    <button id="btn-run" class="btn btn-run">
+                        <span class="icon">▶▶</span> Run
+                    </button>
+                    <button id="btn-stop" class="btn btn-stop" disabled>
+                        <span class="icon">■</span> Stop
+                    </button>
+                </div>
+
+                <div class="speed-control">
+                    <label>Speed:</label>
+                    <input type="range" id="speed-slider" min="1" max="10" value="5">
+                    <span id="speed-value">5</span>
+                </div>
+
+                <!-- Current Instruction -->
+                <div class="info-section">
+                    <h3>Current Instruction</h3>
+                    <div class="instruction-display">
+                        <div class="inst-binary" id="inst-binary">0000000000000000</div>
+                        <div class="inst-asm" id="inst-asm">NOP</div>
+                    </div>
+                </div>
+
+                <!-- Execution Trace -->
+                <div class="info-section trace-section">
+                    <h3>Execution Trace</h3>
+                    <div class="trace-log" id="trace-log"></div>
+                </div>
+
+                <!-- Legend -->
+                <div class="info-section">
+                    <h3>FSM States</h3>
+                    <div class="legend">
+                        <div class="legend-item"><span class="state-dot fetch"></span>FETCH</div>
+                        <div class="legend-item"><span class="state-dot decode"></span>DECODE</div>
+                        <div class="legend-item"><span class="state-dot execute"></span>EXECUTE</div>
+                        <div class="legend-item"><span class="state-dot memory"></span>MEMORY</div>
+                        <div class="legend-item"><span class="state-dot writeback"></span>WRITEBACK</div>
+                        <div class="legend-item"><span class="state-dot halt"></span>HALT</div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <footer>
+            <p>ADLD & CO Project • 16-bit RISC CPU</p>
+        </footer>
+    </div>
+
+    <script src="cpu.js"></script>
+</body>
+</html>

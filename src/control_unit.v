@@ -2,27 +2,32 @@
  * Control Unit Module
  * FSM-based control for instruction decode and signal generation
  * 
- * ADLD & CO Project - 8-bit RISC CPU
+ * ADLD & CO Project - 16-bit RISC CPU
+ * 
+ * 16-bit Instruction Format:
+ * [15:12] - Opcode (4 bits)
+ * [11:10] - Rd (destination register, 2 bits)
+ * [9:8]   - Rs (source register, 2 bits)
+ * [7:0]   - Immediate value (8 bits)
  */
 
 module control_unit (
-    input  wire        clk,              // Clock signal
-    input  wire        reset,            // Reset signal
-    input  wire [7:0]  instruction,      // Current instruction (from IR)
-    input  wire        zero_flag,        // Zero flag from ALU
+    input  wire         clk,              // Clock signal
+    input  wire         reset,            // Reset signal
+    input  wire [15:0]  instruction,      // Current instruction (from IR)
+    input  wire         zero_flag,        // Zero flag from ALU
     
     // Control outputs
-    output reg         pc_enable,        // Enable PC update
-    output reg         pc_load,          // Load PC (for jumps)
-    output reg         reg_write,        // Register write enable
-    output reg         mem_write,        // Memory write enable
-    output reg         mem_to_reg,       // Memory to register MUX
-    output reg         use_imm,          // Use immediate for writeback
-    output reg         ir_load,          // Instruction register load
-    output reg         imm_load,         // Loading immediate value
-    output reg         alu_latch,        // Latch ALU result
-    output reg  [3:0]  alu_op,           // ALU operation
-    output reg         halt              // CPU halt signal
+    output reg          pc_enable,        // Enable PC update
+    output reg          pc_load,          // Load PC (for jumps)
+    output reg          reg_write,        // Register write enable
+    output reg          mem_write,        // Memory write enable
+    output reg          mem_to_reg,       // Memory to register MUX
+    output reg          use_imm,          // Use immediate for writeback
+    output reg          ir_load,          // Instruction register load
+    output reg          alu_latch,        // Latch ALU result
+    output reg  [3:0]   alu_op,           // ALU operation
+    output reg          halt              // CPU halt signal
 );
 
     // Instruction opcodes
@@ -43,20 +48,19 @@ module control_unit (
     localparam OP_HLT = 4'b1110;
     localparam OP_MOV = 4'b1111;
 
-    // FSM States
+    // FSM States (simplified - no FETCH_IMM needed with 16-bit instructions)
     localparam STATE_FETCH     = 3'b000;
     localparam STATE_DECODE    = 3'b001;
     localparam STATE_EXECUTE   = 3'b010;
     localparam STATE_MEMORY    = 3'b011;
     localparam STATE_WRITEBACK = 3'b100;
     localparam STATE_HALT      = 3'b101;
-    localparam STATE_FETCH_IMM = 3'b110;
 
     reg [2:0] state, next_state;
     
     // Latch opcode during decode
     reg [3:0] opcode_reg;
-    wire [3:0] opcode = instruction[7:4];
+    wire [3:0] opcode = instruction[15:12];
 
     // State register
     always @(posedge clk or posedge reset) begin
@@ -81,15 +85,8 @@ module control_unit (
             STATE_DECODE: begin
                 case (opcode)
                     OP_HLT:  next_state = STATE_HALT;
-                    OP_LDI:  next_state = STATE_FETCH_IMM;
-                    OP_JMP:  next_state = STATE_FETCH_IMM;
-                    OP_JZ:   next_state = STATE_FETCH_IMM;
                     default: next_state = STATE_EXECUTE;
                 endcase
-            end
-            
-            STATE_FETCH_IMM: begin
-                next_state = STATE_EXECUTE;
             end
             
             STATE_EXECUTE: begin
@@ -125,7 +122,6 @@ module control_unit (
         mem_to_reg = 1'b0;
         use_imm    = 1'b0;
         ir_load    = 1'b0;
-        imm_load   = 1'b0;
         alu_latch  = 1'b0;
         alu_op     = 4'b0000;
         halt       = 1'b0;
@@ -139,11 +135,6 @@ module control_unit (
             STATE_DECODE: begin
                 // Setup ALU opcode for next cycle
                 alu_op = opcode;
-            end
-            
-            STATE_FETCH_IMM: begin
-                pc_enable = 1'b1;  // Move to next byte
-                imm_load  = 1'b1;  // Load immediate value
             end
             
             STATE_EXECUTE: begin

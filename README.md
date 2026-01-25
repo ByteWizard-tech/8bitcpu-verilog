@@ -1,8 +1,8 @@
-# 8-bit RISC CPU in Verilog
+# 16-bit RISC CPU in Verilog
 
 **ADLD & CO Project (CS-244AI) - Semester End Examination**
 
-A complete 8-bit RISC (Reduced Instruction Set Computer) CPU implemented in Verilog HDL.
+A complete 16-bit RISC (Reduced Instruction Set Computer) CPU implemented in Verilog HDL with an interactive data flow visualizer.
 
 ## Quick Start
 
@@ -10,10 +10,8 @@ A complete 8-bit RISC (Reduced Instruction Set Computer) CPU implemented in Veri
 # Install Icarus Verilog (macOS)
 brew install icarus-verilog
 
-# Compile
+# Compile and run simulation
 iverilog -o cpu_sim src/*.v testbench/cpu_tb.v
-
-# Run simulation
 vvp cpu_sim
 
 # View waveforms (optional)
@@ -21,19 +19,31 @@ brew install gtkwave
 gtkwave cpu_waveform.vcd
 ```
 
+## Data Flow Visualizer
+
+Open `visualization/index.html` in a browser to see an interactive visualization of the CPU:
+- **Step**: Execute one clock cycle at a time
+- **Run**: Continuous execution with speed control
+- **FSM States**: Watch FETCH → DECODE → EXECUTE → MEMORY → WRITEBACK
+- **Data Flow**: See values move between PC, registers, ALU, and memory
+
 ## Project Structure
 
 ```
 ├── src/
-│   ├── alu.v              # 8-bit ALU (ADD, SUB, AND, OR, XOR, NOT, SHL, SHR)
-│   ├── register_file.v    # 4 × 8-bit register file
-│   ├── program_counter.v  # 8-bit program counter
-│   ├── instruction_mem.v  # 256-byte instruction ROM
-│   ├── data_memory.v      # 256-byte data RAM
+│   ├── alu.v              # 16-bit ALU (ADD, SUB, AND, OR, XOR, NOT, SHL, SHR)
+│   ├── register_file.v    # 4 × 16-bit register file
+│   ├── program_counter.v  # 16-bit program counter
+│   ├── instruction_mem.v  # 256 × 16-bit instruction ROM
+│   ├── data_memory.v      # 256 × 16-bit data RAM
 │   ├── control_unit.v     # FSM-based control unit
 │   └── cpu_top.v          # Top-level integration
 ├── testbench/
 │   └── cpu_tb.v           # Simulation testbench
+├── visualization/
+│   ├── index.html         # Data flow visualizer
+│   ├── style.css          # Styling
+│   └── cpu.js             # CPU simulation in JavaScript
 └── docs/
     ├── project_report.md  # Full documentation
     └── viva_guide.md      # Viva Q&A preparation
@@ -43,7 +53,7 @@ gtkwave cpu_waveform.vcd
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                  8-bit RISC CPU                     │
+│                  16-bit RISC CPU                    │
 ├─────────────────────────────────────────────────────┤
 │  PC → Instruction Memory → Control Unit             │
 │         ↓                       ↓                   │
@@ -51,7 +61,11 @@ gtkwave cpu_waveform.vcd
 └─────────────────────────────────────────────────────┘
 ```
 
-## Instruction Set (16 Instructions)
+## 16-bit Instruction Format
+
+```
+[15:12] Opcode  [11:10] Rd  [9:8] Rs  [7:0] Immediate
+```
 
 | Opcode | Mnemonic | Operation |
 |--------|----------|-----------|
@@ -67,8 +81,8 @@ gtkwave cpu_waveform.vcd
 | 1001 | LDI | Rd = immediate |
 | 1010 | LD | Rd = MEM[Rs] |
 | 1011 | ST | MEM[Rs] = Rd |
-| 1100 | JMP | PC = address |
-| 1101 | JZ | if(Z) PC = address |
+| 1100 | JMP | PC = immediate |
+| 1101 | JZ | if(Z) PC = immediate |
 | 1110 | HLT | Halt CPU |
 | 1111 | MOV | Rd = Rs |
 
@@ -91,7 +105,7 @@ HLT            ; Stop
 
 ```
 ========================================
-  8-bit RISC CPU Simulation
+  16-bit RISC CPU Simulation
   ADLD & CO Project
 ========================================
 

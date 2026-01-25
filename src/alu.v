@@ -1,16 +1,16 @@
 /*
  * ALU (Arithmetic Logic Unit) Module
- * 8-bit ALU with 8 operations
+ * 16-bit ALU with 8 operations
  * 
- * ADLD & CO Project - 8-bit RISC CPU
+ * ADLD & CO Project - 16-bit RISC CPU
  */
 
 module alu (
-    input  wire [7:0] operand_a,    // First operand (from register Rd)
-    input  wire [7:0] operand_b,    // Second operand (from register Rs)
-    input  wire [3:0] alu_op,       // ALU operation select
-    output reg  [7:0] result,       // Result of operation
-    output wire       zero_flag     // Zero flag (1 if result is 0)
+    input  wire [15:0] operand_a,   // First operand (from register Rd)
+    input  wire [15:0] operand_b,   // Second operand (from register Rs)
+    input  wire [3:0]  alu_op,      // ALU operation select
+    output reg  [15:0] result,      // Result of operation
+    output wire        zero_flag    // Zero flag (1 if result is 0)
 );
 
     // ALU Operation Codes
@@ -25,7 +25,7 @@ module alu (
     localparam ALU_MOV = 4'b1111;   // Move (pass through B)
 
     // Zero flag is set when result equals zero
-    assign zero_flag = (result == 8'b0);
+    assign zero_flag = (result == 16'b0);
 
     // ALU operation logic (combinational)
     always @(*) begin
@@ -39,7 +39,7 @@ module alu (
             ALU_SHL: result = operand_a << 1;
             ALU_SHR: result = operand_a >> 1;
             ALU_MOV: result = operand_b;
-            default: result = 8'b0;
+            default: result = 16'b0;
         endcase
     end
 
