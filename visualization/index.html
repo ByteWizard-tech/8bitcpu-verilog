@@ -60,27 +60,54 @@
                     <div class="state-display" id="state">FETCH</div>
                 </div>
 
-                <!-- Data Buses (SVG) -->
+                <!-- Data Buses (SVG) - Dynamically generated -->
                 <svg class="data-buses" id="buses">
-                    <!-- PC to IMEM -->
-                    <path id="bus-pc-imem" class="bus" d="M 160 80 L 160 130"/>
-                    <!-- IMEM to Control -->
-                    <path id="bus-imem-ctrl" class="bus" d="M 200 180 L 350 180 L 350 80"/>
-                    <!-- Control to all -->
-                    <path id="bus-ctrl-all" class="bus" d="M 400 100 L 450 100"/>
-                    <!-- RegFile to ALU -->
-                    <path id="bus-reg-alu" class="bus" d="M 160 400 L 160 450"/>
-                    <!-- ALU to RegFile (writeback) -->
-                    <path id="bus-alu-reg" class="bus" d="M 100 500 L 100 350"/>
-                    <!-- RegFile to DMEM -->
-                    <path id="bus-reg-dmem" class="bus" d="M 250 350 L 350 350"/>
-                    <!-- DMEM to RegFile -->
-                    <path id="bus-dmem-reg" class="bus" d="M 350 400 L 250 400"/>
+                    <defs>
+                        <!-- Arrow marker for normal state -->
+                        <marker id="arrowhead" markerWidth="12" markerHeight="10" refX="10" refY="5" orient="auto" markerUnits="strokeWidth">
+                            <polygon points="0 0, 12 5, 0 10" fill="rgba(59, 130, 246, 0.5)" />
+                        </marker>
+                        <!-- Arrow marker for active/glowing state -->
+                        <marker id="arrowhead-active" markerWidth="12" markerHeight="10" refX="10" refY="5" orient="auto" markerUnits="strokeWidth">
+                            <polygon points="0 0, 12 5, 0 10" fill="#06b6d4" />
+                        </marker>
+                        <!-- Gradient for flowing effect -->
+                        <linearGradient id="flow-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:0" />
+                            <stop offset="50%" style="stop-color:#06b6d4;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:0" />
+                        </linearGradient>
+                    </defs>
+                    <!-- Connection paths will be generated dynamically by JavaScript -->
                 </svg>
             </div>
 
             <!-- Controls and Info Panel -->
             <aside class="info-panel">
+                <!-- Program Input Section -->
+                <div class="info-section program-section">
+                    <h3>Program Input</h3>
+                    <div class="program-input-container">
+                        <textarea id="program-input" class="program-textarea" placeholder="Enter assembly code here...
+Example:
+LDI R0, 5
+LDI R1, 3
+ADD R0, R1
+LDI R2, 2
+SUB R0, R2
+HLT" spellcheck="false"></textarea>
+                        <div class="program-buttons">
+                            <button id="btn-load" class="btn btn-load">
+                                <span class="icon">⬇</span> Load Program
+                            </button>
+                            <button id="btn-example" class="btn btn-example">
+                                <span class="icon">📋</span> Load Example
+                            </button>
+                        </div>
+                        <div id="parse-status" class="parse-status"></div>
+                    </div>
+                </div>
+
                 <div class="control-buttons">
                     <button id="btn-reset" class="btn btn-reset">
                         <span class="icon">↺</span> Reset
@@ -128,6 +155,45 @@
                         <div class="legend-item"><span class="state-dot writeback"></span>WRITEBACK</div>
                         <div class="legend-item"><span class="state-dot halt"></span>HALT</div>
                     </div>
+                </div>
+
+                <!-- Instruction Reference -->
+                <div class="info-section instruction-ref">
+                    <h3>Instruction Reference</h3>
+                    <div class="instr-list">
+                        <div class="instr-group">
+                            <div class="instr-title">Arithmetic</div>
+                            <code>ADD Rd, Rs</code>
+                            <code>SUB Rd, Rs</code>
+                        </div>
+                        <div class="instr-group">
+                            <div class="instr-title">Logic</div>
+                            <code>AND Rd, Rs</code>
+                            <code>OR Rd, Rs</code>
+                            <code>XOR Rd, Rs</code>
+                            <code>NOT Rd</code>
+                        </div>
+                        <div class="instr-group">
+                            <div class="instr-title">Shift</div>
+                            <code>SHL Rd</code>
+                            <code>SHR Rd</code>
+                        </div>
+                        <div class="instr-group">
+                            <div class="instr-title">Data</div>
+                            <code>LDI Rd, imm</code>
+                            <code>LD Rd, [Rs]</code>
+                            <code>ST Rd, [Rs]</code>
+                            <code>MOV Rd, Rs</code>
+                        </div>
+                        <div class="instr-group">
+                            <div class="instr-title">Control</div>
+                            <code>JMP addr</code>
+                            <code>JZ addr</code>
+                            <code>HLT</code>
+                            <code>NOP</code>
+                        </div>
+                    </div>
+                    <div class="instr-note">Registers: R0, R1, R2, R3 | Immediate: 0-255</div>
                 </div>
             </aside>
         </main>

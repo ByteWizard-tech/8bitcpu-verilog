@@ -221,27 +221,216 @@ header h1 {
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: 0;
+    z-index: 1;
+    overflow: visible;
 }
 
 .bus {
     fill: none;
-    stroke: var(--border-color);
+    stroke: rgba(59, 130, 246, 0.3);
     stroke-width: 2;
-    transition: all 0.3s ease;
+    transition: stroke 0.3s ease, stroke-width 0.3s ease, filter 0.3s ease;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.bus:hover {
+    stroke: rgba(59, 130, 246, 0.5);
 }
 
 .bus.active {
     stroke: var(--accent-cyan);
     stroke-width: 3;
-    filter: drop-shadow(0 0 5px var(--accent-cyan));
+    filter: drop-shadow(0 0 8px var(--accent-cyan)) drop-shadow(0 0 15px rgba(6, 182, 212, 0.5));
+}
+
+.bus.active .arrow-marker {
+    fill: var(--accent-cyan);
+}
+
+/* Flow animation overlay path */
+.bus-flow {
+    fill: none;
+    stroke: url(#flow-gradient);
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-dasharray: 20 100;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.bus-flow.flowing {
+    opacity: 1;
+    animation: flowPulse 0.8s ease-in-out;
+}
+
+@keyframes flowPulse {
+    0% {
+        stroke-dashoffset: 120;
+        opacity: 0;
+    }
+    20% {
+        opacity: 1;
+    }
+    80% {
+        opacity: 1;
+    }
+    100% {
+        stroke-dashoffset: 0;
+        opacity: 0;
+    }
+}
+
+/* Data particle animation */
+.data-particle {
+    fill: var(--accent-cyan);
+    filter: drop-shadow(0 0 6px var(--accent-cyan)) drop-shadow(0 0 10px rgba(6, 182, 212, 0.8));
+}
+
+.data-particle.animate {
+    animation: particleMove 0.6s ease-in-out forwards;
+}
+
+@keyframes particleMove {
+    0% {
+        opacity: 1;
+        offset-distance: 0%;
+    }
+    100% {
+        opacity: 0.3;
+        offset-distance: 100%;
+    }
+}
+
+/* Glow effect for active connections */
+.connection-glow {
+    fill: none;
+    stroke: var(--accent-cyan);
+    stroke-width: 8;
+    opacity: 0;
+    filter: blur(4px);
+}
+
+.connection-glow.active {
+    animation: glowPulse 0.5s ease-out;
+}
+
+@keyframes glowPulse {
+    0% {
+        opacity: 0.8;
+        stroke-width: 12;
+    }
+    100% {
+        opacity: 0;
+        stroke-width: 4;
+    }
+}
+
+/* Data Flow Animation */
+@keyframes dataFlow {
+    0% { stroke-dashoffset: 100; }
+    100% { stroke-dashoffset: 0; }
 }
 
 /* Info Panel */
 .info-panel {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 15px;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
+/* Program Input Section */
+.program-section {
+    padding: 12px;
+}
+
+.program-input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.program-textarea {
+    width: 100%;
+    min-height: 120px;
+    max-height: 200px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    resize: vertical;
+    line-height: 1.5;
+}
+
+.program-textarea::placeholder {
+    color: var(--text-dim);
+}
+
+.program-textarea:focus {
+    outline: none;
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
+}
+
+.program-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.btn-load {
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+    color: white;
+}
+
+.btn-load:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(6, 182, 212, 0.4);
+}
+
+.btn-example {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.btn-example:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.parse-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    padding: 8px;
+    border-radius: 6px;
+    display: none;
+}
+
+.parse-status.success {
+    display: block;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid var(--accent-green);
+    color: var(--accent-green);
+}
+
+.parse-status.error {
+    display: block;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid var(--accent-red);
+    color: var(--accent-red);
+}
+
+/* Instruction Reference Tooltip */
+.instruction-help {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-top: 4px;
 }
 
 /* Control Buttons */
@@ -337,6 +526,7 @@ header h1 {
 .speed-control input[type="range"] {
     flex: 1;
     -webkit-appearance: none;
+    appearance: none;
     background: var(--bg-tertiary);
     height: 6px;
     border-radius: 3px;
@@ -465,23 +655,55 @@ header h1 {
 .state-dot.writeback { background: var(--accent-green); }
 .state-dot.halt { background: var(--accent-red); }
 
+/* Instruction Reference */
+.instruction-ref {
+    padding: 12px;
+}
+
+.instr-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.instr-group {
+    background: var(--bg-secondary);
+    padding: 8px;
+    border-radius: 6px;
+}
+
+.instr-title {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: var(--accent-cyan);
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.instr-group code {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    padding: 1px 0;
+}
+
+.instr-note {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    margin-top: 8px;
+    text-align: center;
+    padding: 4px;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+}
+
 /* Footer */
 footer {
     text-align: center;
     padding: 30px 0;
     color: var(--text-dim);
     font-size: 0.85rem;
-}
-
-/* Data Flow Animation */
-@keyframes dataFlow {
-    0% { stroke-dashoffset: 100; }
-    100% { stroke-dashoffset: 0; }
-}
-
-.bus.flowing {
-    stroke-dasharray: 10, 5;
-    animation: dataFlow 0.5s linear infinite;
 }
 
 /* Responsive */
