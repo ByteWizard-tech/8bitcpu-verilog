@@ -11,7 +11,7 @@
     <div class="container">
         <header>
             <h1>16-bit RISC CPU</h1>
-            <p class="subtitle">Data Flow Visualizer • ADLD & CO Project</p>
+            <p class="subtitle">Data Flow Visualizer</p>
         </header>
 
         <main class="cpu-layout">
@@ -98,19 +98,30 @@ SUB R0, R2
 HLT" spellcheck="false"></textarea>
                         <div class="program-buttons">
                             <button id="btn-load" class="btn btn-load">
-                                <span class="icon">⬇</span> Load Program
+                                <span class="icon">⬇</span> Load (JS)
+                            </button>
+                            <button id="btn-verilog-run" class="btn btn-verilog" disabled>
+                                <span class="icon">⚡</span> Run Verilog
                             </button>
                             <button id="btn-example" class="btn btn-example">
-                                <span class="icon">📋</span> Load Example
+                                <span class="icon">📋</span> Example
                             </button>
                         </div>
                         <div id="parse-status" class="parse-status"></div>
+                        <div class="verilog-info">
+                            <span id="verilog-status" class="verilog-status">Checking backend...</span>
+                            <span id="mode-indicator" class="mode-indicator js">JS Mode</span>
+                        </div>
+                        <div id="cycle-counter" class="cycle-counter"></div>
                     </div>
                 </div>
 
                 <div class="control-buttons">
                     <button id="btn-reset" class="btn btn-reset">
                         <span class="icon">↺</span> Reset
+                    </button>
+                    <button id="btn-step-back" class="btn btn-step-back">
+                        <span class="icon">◂</span> Back
                     </button>
                     <button id="btn-step" class="btn btn-step">
                         <span class="icon">▸</span> Step
@@ -199,10 +210,11 @@ HLT" spellcheck="false"></textarea>
         </main>
 
         <footer>
-            <p>ADLD & CO Project • 16-bit RISC CPU</p>
+            <p>16-bit RISC CPU</p>
         </footer>
     </div>
 
+    <script src="api.js"></script>
     <script src="cpu.js"></script>
 </body>
 </html>

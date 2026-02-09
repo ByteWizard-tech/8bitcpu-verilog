@@ -1044,10 +1044,296 @@ class CPUVisualizer {
         this.traceLog.appendChild(entry);
         this.traceLog.scrollTop = this.traceLog.scrollHeight;
     }
+
+    // =========================================================
+    // Verilog Simulation Mode (Trace and Replay)
+    // =========================================================
+    
+    /**
+     * Initialize Verilog mode elements
+     */
+    initVerilogMode() {
+        console.log('[VerilogMode] Initializing...');
+        
+        this.verilogMode = false;
+        
+        // Check if API is available
+        if (!window.VerilogAPI) {
+            console.error('[VerilogMode] window.VerilogAPI not found! api.js may not be loaded.');
+            return;
+        }
+        
+        try {
+            this.tracePlayer = new window.VerilogAPI.VerilogTracePlayer();
+            console.log('[VerilogMode] TracePlayer created');
+        } catch (e) {
+            console.error('[VerilogMode] Failed to create TracePlayer:', e);
+            return;
+        }
+        
+        // Get Verilog mode elements
+        this.btnVerilogRun = document.getElementById('btn-verilog-run');
+        this.btnStepBack = document.getElementById('btn-step-back');
+        this.verilogStatus = document.getElementById('verilog-status');
+        this.modeIndicator = document.getElementById('mode-indicator');
+        this.cycleCounter = document.getElementById('cycle-counter');
+        
+        console.log('[VerilogMode] Button found:', this.btnVerilogRun ? 'YES' : 'NO');
+        
+        if (this.btnVerilogRun) {
+            this.btnVerilogRun.addEventListener('click', () => {
+                console.log('[VerilogMode] Run Verilog button clicked!');
+                this.runVerilogSimulation();
+            });
+            console.log('[VerilogMode] Click listener attached to Run Verilog button');
+        } else {
+            console.error('[VerilogMode] btn-verilog-run element not found!');
+        }
+        
+        if (this.btnStepBack) {
+            this.btnStepBack.addEventListener('click', () => this.stepBackVerilog());
+        }
+        
+        // Check backend health on load
+        this.checkBackendStatus();
+        console.log('[VerilogMode] Initialization complete');
+    }
+    
+    /**
+     * Check if backend is available
+     */
+    async checkBackendStatus() {
+        if (!window.VerilogAPI) {
+            this.setVerilogStatus('API not loaded', 'error');
+            return;
+        }
+        
+        const health = await window.VerilogAPI.checkBackendHealth();
+        
+        if (health.ok && health.iverilog) {
+            this.setVerilogStatus('Backend ready', 'success');
+            if (this.btnVerilogRun) this.btnVerilogRun.disabled = false;
+        } else if (health.ok) {
+            this.setVerilogStatus('iverilog not found', 'warning');
+        } else {
+            this.setVerilogStatus('Backend offline', 'warning');
+        }
+    }
+    
+    /**
+     * Run Verilog simulation
+     */
+    async runVerilogSimulation() {
+        console.log('[VerilogMode] runVerilogSimulation called');
+        const text = this.programInput.value.trim();
+        
+        console.log('[VerilogMode] Assembly code length:', text.length);
+        
+        if (!text) {
+            this.showParseStatus('Please enter some assembly code', 'error');
+            return;
+        }
+        
+        this.stop();
+        this.setVerilogStatus('Simulating...', 'loading');
+        if (this.btnVerilogRun) this.btnVerilogRun.disabled = true;
+        
+        console.log('[VerilogMode] Calling backend API...');
+        
+        try {
+            const result = await window.VerilogAPI.runVerilogSimulation(text);
+            
+            console.log('[VerilogMode] API result:', result.success, 'trace length:', result.trace?.length);
+            
+            if (!result.success) {
+                this.setVerilogStatus('Simulation failed', 'error');
+                this.showParseStatus(result.error || 'Unknown error', 'error');
+                if (this.btnVerilogRun) this.btnVerilogRun.disabled = false;
+                return;
+            }
+            
+            // Load trace into player
+            this.tracePlayer.loadTrace(result.trace);
+            this.verilogMode = true;
+            
+            // Update UI
+            this.setVerilogStatus(`Loaded ${result.trace.length} cycles`, 'success');
+            this.showParseStatus(`✓ Verilog simulation complete: ${result.trace.length} cycles`, 'success');
+            this.updateModeIndicator('verilog');
+            
+            // Reset and display first state
+            this.traceLog.innerHTML = '';
+            this.updateDisplayFromTrace();
+            
+        } catch (error) {
+            this.setVerilogStatus('Error', 'error');
+            this.showParseStatus(`Error: ${error.message}`, 'error');
+        }
+        
+        if (this.btnVerilogRun) this.btnVerilogRun.disabled = false;
+    }
+    
+    /**
+     * Step forward in Verilog trace
+     */
+    stepVerilog() {
+        if (!this.verilogMode || !this.tracePlayer.isLoaded) return;
+        
+        const state = this.tracePlayer.step();
+        if (state) {
+            this.updateDisplayFromTrace();
+            this.addVerilogTraceEntry(state);
+        }
+    }
+    
+    /**
+     * Step backward in Verilog trace
+     */
+    stepBackVerilog() {
+        if (!this.verilogMode || !this.tracePlayer.isLoaded) return;
+        
+        this.tracePlayer.stepBack();
+        this.updateDisplayFromTrace();
+    }
+    
+    /**
+     * Update display from current trace state
+     */
+    updateDisplayFromTrace() {
+        const state = this.tracePlayer.getCurrentState();
+        if (!state) return;
+        
+        // Update cycle counter
+        if (this.cycleCounter) {
+            this.cycleCounter.textContent = `Cycle: ${this.tracePlayer.getCurrentCycle()} / ${this.tracePlayer.getTotalCycles()}`;
+        }
+        
+        // PC
+        this.pcValue.textContent = `0x${state.pc.toString(16).toUpperCase().padStart(4, '0')}`;
+        
+        // Instruction
+        const instr = state.instruction || 0;
+        this.imemValue.textContent = `0x${instr.toString(16).toUpperCase().padStart(4, '0')}`;
+        this.instructionDecode.textContent = state.opcode || 'NOP';
+        
+        // Registers
+        this.updateRegister(this.r0, state.r0);
+        this.updateRegister(this.r1, state.r1);
+        this.updateRegister(this.r2, state.r2);
+        this.updateRegister(this.r3, state.r3);
+        
+        // ALU
+        this.aluOp.textContent = state.opcode || 'NOP';
+        this.aluResult.textContent = state.alu_result;
+        
+        // State
+        const stateName = state.state;
+        this.stateDisplay.textContent = stateName;
+        this.stateDisplay.className = 'state-display ' + stateName.toLowerCase();
+        
+        // Binary instruction
+        this.instBinary.textContent = instr.toString(2).padStart(16, '0');
+        this.instAsm.textContent = state.opcode || 'NOP';
+        
+        // Highlight current state
+        this.highlightState(stateName);
+    }
+    
+    /**
+     * Add trace entry for Verilog mode
+     */
+    addVerilogTraceEntry(state) {
+        if (state.state !== 'WRITEBACK' && state.state !== 'HALT') return;
+        
+        const entry = document.createElement('div');
+        entry.className = 'trace-entry';
+        entry.innerHTML = `<span class="pc">[${state.cycle}]</span> <span class="instr">${state.opcode} R${state.rd}</span>`;
+        this.traceLog.appendChild(entry);
+        this.traceLog.scrollTop = this.traceLog.scrollHeight;
+    }
+    
+    /**
+     * Set Verilog status indicator
+     */
+    setVerilogStatus(message, type) {
+        if (this.verilogStatus) {
+            this.verilogStatus.textContent = message;
+            this.verilogStatus.className = 'verilog-status ' + type;
+        }
+    }
+    
+    /**
+     * Update mode indicator
+     */
+    updateModeIndicator(mode) {
+        if (this.modeIndicator) {
+            this.modeIndicator.textContent = mode === 'verilog' ? 'Verilog Mode' : 'JS Mode';
+            this.modeIndicator.className = 'mode-indicator ' + mode;
+        }
+    }
+    
+    /**
+     * Override step to support both modes
+     */
+    stepWithMode() {
+        if (this.verilogMode) {
+            this.stepVerilog();
+        } else {
+            this.step();
+        }
+    }
+    
+    /**
+     * Override reset to handle both modes
+     */
+    resetWithMode() {
+        if (this.verilogMode) {
+            this.tracePlayer.reset();
+            this.updateDisplayFromTrace();
+            this.traceLog.innerHTML = '';
+        } else {
+            this.reset();
+        }
+    }
+    
+    /**
+     * Exit Verilog mode and return to JS simulation
+     */
+    exitVerilogMode() {
+        this.verilogMode = false;
+        this.tracePlayer = new window.VerilogAPI.VerilogTracePlayer();
+        this.updateModeIndicator('js');
+        if (this.cycleCounter) this.cycleCounter.textContent = '';
+    }
 }
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     window.cpuViz = new CPUVisualizer();
+    
+    // Initialize Verilog mode after a short delay to ensure API is loaded
+    setTimeout(() => {
+        if (window.cpuViz && typeof window.cpuViz.initVerilogMode === 'function') {
+            window.cpuViz.initVerilogMode();
+            
+            // Override step button if in Verilog mode
+            const btnStep = document.getElementById('btn-step');
+            if (btnStep) {
+                const originalClick = btnStep.onclick;
+                btnStep.onclick = null;
+                btnStep.addEventListener('click', () => {
+                    window.cpuViz.stepWithMode();
+                });
+            }
+            
+            // Override reset button
+            const btnReset = document.getElementById('btn-reset');
+            if (btnReset) {
+                btnReset.addEventListener('click', () => {
+                    window.cpuViz.exitVerilogMode();
+                });
+            }
+        }
+    }, 100);
 });
 
