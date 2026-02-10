@@ -13,10 +13,6 @@ brew install icarus-verilog
 # Compile and run simulation
 iverilog -o cpu_sim src/*.v testbench/cpu_tb.v
 vvp cpu_sim
-
-# View waveforms (optional)
-brew install gtkwave
-gtkwave cpu_waveform.vcd
 ```
 
 ## Data Flow Visualizer
@@ -45,8 +41,10 @@ Open `visualization/index.html` in a browser to see an interactive visualization
 │   ├── style.css          # Styling
 │   └── cpu.js             # CPU simulation in JavaScript
 └── docs/
-    ├── project_report.md  # Full documentation
-    └── viva_guide.md      # Viva Q&A preparation
+    ├── cpu_block_diagram.png    # CPU block diagram
+    ├── cpu_datapath.png         # CPU datapath diagram
+    ├── fsm_state_diagram.png    # FSM state diagram
+    └── methodology_flowchart.png # Methodology flowchart
 ```
 
 ## CPU Architecture
@@ -120,6 +118,9 @@ Data Memory[0] = 6 (expected: 6)
 *** TEST PASSED ***
 ```
 
-## Author
+## Authors
+
+- **Nithin Eashwar** (1RV24CS173)
+- **Omesh Sengar** (1RV24CS178)
 
 ADLD & CO (CS-244AI) Project - 2026
