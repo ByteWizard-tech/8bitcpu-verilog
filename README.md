@@ -122,5 +122,7 @@ Data Memory[0] = 6 (expected: 6)
 
 - **Nithin Eashwar** (1RV24CS173)
 - **Omesh Sengar** (1RV24CS178)
+- **Pranav Bhandi**
+- **Poojith K**
 
 ADLD & CO (CS-244AI) Project - 2026
